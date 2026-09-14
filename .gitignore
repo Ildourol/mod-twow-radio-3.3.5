@@ -1,15 +1,17 @@
-# Binaries & Client
+# Client binaries
 Wow.exe
 version.dll
 
-# Build sources & artifacts
-src/
-bass/
+# Build artifacts
 *.obj
-*.lib
 *.exp
 *.pdb
-*.zip
-
-# Logs
 *.log
+src/*.dll
+src/*.lib
+src/*.exp
+src/*.obj
+src/*.exe
+
+# Retain required build dependencies
+!bass/c/bass.lib
