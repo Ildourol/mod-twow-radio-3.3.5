@@ -1,0 +1,15 @@
+# Binaries & Client
+Wow.exe
+version.dll
+
+# Build sources & artifacts
+src/
+bass/
+*.obj
+*.lib
+*.exp
+*.pdb
+*.zip
+
+# Logs
+*.log
