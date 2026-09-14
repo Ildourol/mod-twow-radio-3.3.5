@@ -73,6 +73,17 @@ local presetHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 presetHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -58)
 presetHeader:SetText("Broadcast Stations (Click to Tune In):")
 
+-- Custom font for preset buttons (-1 font size to fit text cleanly)
+local stationFont = CreateFont("ServerRadioStationFont")
+local fontFile, fontSize, fontFlags = GameFontNormal:GetFont()
+stationFont:SetFont(fontFile, fontSize - 1, fontFlags)
+stationFont:SetTextColor(GameFontNormal:GetTextColor())
+
+local stationHighlightFont = CreateFont("ServerRadioStationHighlightFont")
+local hFontFile, hFontSize, hFontFlags = GameFontHighlight:GetFont()
+stationHighlightFont:SetFont(hFontFile, hFontSize - 1, hFontFlags)
+stationHighlightFont:SetTextColor(GameFontHighlight:GetTextColor())
+
 -- Preset Station Buttons (2 columns of 3)
 local stationButtons = {}
 for i, station in ipairs(STATIONS) do
@@ -83,6 +94,8 @@ for i, station in ipairs(STATIONS) do
     else
         btn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -78 - (math.floor((i - 1) / 2) * 28))
     end
+    btn:SetNormalFontObject(stationFont)
+    btn:SetHighlightFontObject(stationHighlightFont)
     btn:SetText(station.name)
     btn:SetScript("OnClick", function()
         ServerRadioDB.selectedStation = i
@@ -149,6 +162,8 @@ statusText:SetText("Status: |cFF888888Stopped|r")
 local playBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 playBtn:SetSize(90, 26)
 playBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 44)
+playBtn:SetNormalFontObject(stationFont)
+playBtn:SetHighlightFontObject(stationHighlightFont)
 playBtn:SetText("Play")
 playBtn:SetScript("OnClick", function()
     ServerRadio_PlayCurrent()
@@ -157,6 +172,8 @@ end)
 local stopBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 stopBtn:SetSize(90, 26)
 stopBtn:SetPoint("LEFT", playBtn, "RIGHT", 10, 0)
+stopBtn:SetNormalFontObject(stationFont)
+stopBtn:SetHighlightFontObject(stationHighlightFont)
 stopBtn:SetText("Stop")
 stopBtn:SetScript("OnClick", function()
     ServerRadio_Stop()
