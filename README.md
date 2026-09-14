@@ -27,9 +27,10 @@ The player comes pre-configured with 6 curated live streaming stations:
 
 ## Features
 
-- **Expanded In-Game Player Window (420 x 370):**
+- **Expanded In-Game Player Window (420 x 395):**
   - **One-Click Presets:** Instant tuning buttons for all 6 pre-configured stations.
   - **Custom Stream URL Input:** Paste any live web stream URL into the input field and hit Play.
+  - **Auto-Pause on Minimize:** Automatically pauses radio audio when the game window is minimized and resumes immediately upon restoring the window (like native WoW game sound). Can be toggled via the checkbox in the UI or `/radio min`.
   - **Live Song Title Display:** Displays live track and artist metadata broadcasted by the station.
   - **Independent Volume Slider:** Adjust radio volume from 0% to 100% without altering master game sound.
   - **Draggable & Clean:** Movable window styled after the classic WoW interface with Goblin iconography.
@@ -68,6 +69,7 @@ Copy the `AddOns/ServerRadio` folder into your game's AddOns directory:
 | `/radio` or `/stream` | Opens / closes the Radio Player window |
 | `/radio play` | Starts streaming the currently selected station |
 | `/radio stop` | Stops streaming audio |
+| `/radio min` | Toggles auto-pause when game window is minimized |
 | `/radio vol <0-100>` | Sets volume directly (e.g. `/radio vol 50`) |
 
 ---

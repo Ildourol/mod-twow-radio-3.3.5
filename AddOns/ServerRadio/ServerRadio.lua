@@ -7,6 +7,7 @@ ServerRadioDB = ServerRadioDB or {
     selectedStation = 1,
     customUrl = "",
     autoPlay = false,
+    stopOnMinimize = true,
 }
 
 local STATIONS = {
@@ -23,10 +24,10 @@ local function HasRadioSupport()
 end
 
 -- -------------------------------------------------------------
--- Expanded Main Player Window (420 x 370)
+-- Expanded Main Player Window (420 x 395)
 -- -------------------------------------------------------------
 local frame = CreateFrame("Frame", "ServerRadioFrame", UIParent)
-frame:SetSize(420, 370)
+frame:SetSize(420, 395)
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 frame:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -147,7 +148,7 @@ statusText:SetText("Status: |cFF888888Stopped|r")
 -- Controls: Play, Stop Buttons
 local playBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 playBtn:SetSize(90, 26)
-playBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 24)
+playBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 44)
 playBtn:SetText("Play")
 playBtn:SetScript("OnClick", function()
     ServerRadio_PlayCurrent()
@@ -163,7 +164,7 @@ end)
 
 -- Volume Slider
 local volSlider = CreateFrame("Slider", "ServerRadioVolSlider", frame, "OptionsSliderTemplate")
-volSlider:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -25, 26)
+volSlider:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -25, 46)
 volSlider:SetMinMaxValues(0, 100)
 volSlider:SetValue((ServerRadioDB.volume or 0.5) * 100)
 volSlider:SetValueStep(5)
@@ -178,6 +179,21 @@ volSlider:SetScript("OnValueChanged", function(self, value)
     _G[self:GetName() .. "Text"]:SetText("Volume: " .. math.floor(value) .. "%")
     if HasRadioSupport() and SetRadioVolume then
         SetRadioVolume(vol)
+    end
+end)
+
+-- Minimize Auto-Pause Checkbox
+local stopOnMinCheck = CreateFrame("CheckButton", "ServerRadioStopOnMinCheck", frame, "UICheckButtonTemplate")
+stopOnMinCheck:SetSize(22, 22)
+stopOnMinCheck:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 12)
+_G[stopOnMinCheck:GetName() .. "Text"]:SetText("Auto-pause when game is minimized (Auto-resumes on restore)")
+_G[stopOnMinCheck:GetName() .. "Text"]:SetFontObject("GameFontNormalSmall")
+stopOnMinCheck:SetChecked(ServerRadioDB.stopOnMinimize ~= false)
+stopOnMinCheck:SetScript("OnClick", function(self)
+    local isChecked = self:GetChecked() and true or false
+    ServerRadioDB.stopOnMinimize = isChecked
+    if SetRadioStopOnMinimize then
+        SetRadioStopOnMinimize(isChecked and 1 or 0)
     end
 end)
 
@@ -238,6 +254,13 @@ SlashCmdList["SERVERRADIO"] = function(msg)
         ServerRadio_PlayCurrent()
     elseif msg == "stop" then
         ServerRadio_Stop()
+    elseif msg == "min" then
+        ServerRadioDB.stopOnMinimize = not (ServerRadioDB.stopOnMinimize ~= false)
+        stopOnMinCheck:SetChecked(ServerRadioDB.stopOnMinimize)
+        if SetRadioStopOnMinimize then
+            SetRadioStopOnMinimize(ServerRadioDB.stopOnMinimize and 1 or 0)
+        end
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Auto-pause on minimize: " .. (ServerRadioDB.stopOnMinimize and "|cFF00FF00Enabled|r" or "|cFFFF0000Disabled|r"))
     elseif msg:match("^vol%s*(%d+)$") then
         local volVal = tonumber(msg:match("^vol%s*(%d+)$"))
         if volVal then
@@ -256,6 +279,11 @@ end
 local loaderFrame = CreateFrame("Frame")
 loaderFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 loaderFrame:SetScript("OnEvent", function()
+    stopOnMinCheck:SetChecked(ServerRadioDB.stopOnMinimize ~= false)
+    if SetRadioStopOnMinimize then
+        SetRadioStopOnMinimize(ServerRadioDB.stopOnMinimize ~= false and 1 or 0)
+    end
+
     if HasRadioSupport() then
         DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Everlook Broadcasting Co. loaded! Type |cFFFFFF00/radio|r to open player.")
     else
