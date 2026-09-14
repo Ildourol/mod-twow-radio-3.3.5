@@ -8,6 +8,7 @@ ServerRadioDB = ServerRadioDB or {
     customUrl = "",
     autoPlay = false,
     stopOnMinimize = true,
+    stopOnBackground = true,
 }
 
 local STATIONS = {
@@ -24,10 +25,10 @@ local function HasRadioSupport()
 end
 
 -- -------------------------------------------------------------
--- Expanded Main Player Window (420 x 395)
+-- Expanded Main Player Window (420 x 425)
 -- -------------------------------------------------------------
 local frame = CreateFrame("Frame", "ServerRadioFrame", UIParent)
-frame:SetSize(420, 395)
+frame:SetSize(420, 425)
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 frame:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -161,7 +162,7 @@ statusText:SetText("Status: |cFF888888Stopped|r")
 -- Controls: Play, Stop Buttons
 local playBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 playBtn:SetSize(90, 26)
-playBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 44)
+playBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 68)
 playBtn:SetNormalFontObject(stationFont)
 playBtn:SetHighlightFontObject(stationHighlightFont)
 playBtn:SetText("Play")
@@ -181,7 +182,7 @@ end)
 
 -- Volume Slider
 local volSlider = CreateFrame("Slider", "ServerRadioVolSlider", frame, "OptionsSliderTemplate")
-volSlider:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -25, 46)
+volSlider:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -25, 70)
 volSlider:SetMinMaxValues(0, 100)
 volSlider:SetValue((ServerRadioDB.volume or 0.5) * 100)
 volSlider:SetValueStep(5)
@@ -199,7 +200,7 @@ volSlider:SetScript("OnValueChanged", function(self, value)
     end
 end)
 
--- Synchronization helper
+-- Synchronization helpers
 local function SyncStopOnMinState(val)
     ServerRadioDB.stopOnMinimize = val
     if stopOnMinCheck then stopOnMinCheck:SetChecked(val) end
@@ -209,16 +210,37 @@ local function SyncStopOnMinState(val)
     end
 end
 
+local function SyncStopOnBgState(val)
+    ServerRadioDB.stopOnBackground = val
+    if stopOnBgCheck then stopOnBgCheck:SetChecked(val) end
+    if ServerRadioOptStopOnBg then ServerRadioOptStopOnBg:SetChecked(val) end
+    if HasRadioSupport() and SetRadioStopOnBackground then
+        SetRadioStopOnBackground(val and 1 or 0)
+    end
+end
+
 -- Minimize Auto-Pause Checkbox on Main Window
 local stopOnMinCheck = CreateFrame("CheckButton", "ServerRadioStopOnMinCheck", frame, "UICheckButtonTemplate")
 stopOnMinCheck:SetSize(22, 22)
-stopOnMinCheck:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 12)
+stopOnMinCheck:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 38)
 _G[stopOnMinCheck:GetName() .. "Text"]:SetText("Auto-pause when game is minimized (Auto-resumes on restore)")
 _G[stopOnMinCheck:GetName() .. "Text"]:SetFontObject("GameFontNormalSmall")
 stopOnMinCheck:SetChecked(true)
 stopOnMinCheck:SetScript("OnClick", function(self)
     local isChecked = self:GetChecked() and true or false
     SyncStopOnMinState(isChecked)
+end)
+
+-- Background / Inactive Auto-Pause Checkbox on Main Window (Windowed Mode)
+local stopOnBgCheck = CreateFrame("CheckButton", "ServerRadioStopOnBgCheck", frame, "UICheckButtonTemplate")
+stopOnBgCheck:SetSize(22, 22)
+stopOnBgCheck:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 14)
+_G[stopOnBgCheck:GetName() .. "Text"]:SetText("Auto-pause when game is in background / leaving window")
+_G[stopOnBgCheck:GetName() .. "Text"]:SetFontObject("GameFontNormalSmall")
+stopOnBgCheck:SetChecked(true)
+stopOnBgCheck:SetScript("OnClick", function(self)
+    local isChecked = self:GetChecked() and true or false
+    SyncStopOnBgState(isChecked)
 end)
 
 -- -------------------------------------------------------------
@@ -245,9 +267,19 @@ optStopOnMin:SetScript("OnClick", function(self)
     SyncStopOnMinState(isChecked)
 end)
 
+local optStopOnBg = CreateFrame("CheckButton", "ServerRadioOptStopOnBg", optionsPanel, "UICheckButtonTemplate")
+optStopOnBg:SetPoint("TOPLEFT", optStopOnMin, "BOTTOMLEFT", 0, -10)
+_G[optStopOnBg:GetName() .. "Text"]:SetText("Auto-pause when game is in background / inactive in windowed mode")
+_G[optStopOnBg:GetName() .. "Text"]:SetFontObject("GameFontNormal")
+optStopOnBg:SetChecked(true)
+optStopOnBg:SetScript("OnClick", function(self)
+    local isChecked = self:GetChecked() and true or false
+    SyncStopOnBgState(isChecked)
+end)
+
 local optOpenBtn = CreateFrame("Button", nil, optionsPanel, "UIPanelButtonTemplate")
 optOpenBtn:SetSize(160, 26)
-optOpenBtn:SetPoint("TOPLEFT", optStopOnMin, "BOTTOMLEFT", 2, -20)
+optOpenBtn:SetPoint("TOPLEFT", optStopOnBg, "BOTTOMLEFT", 2, -20)
 optOpenBtn:SetText("Open Radio Player")
 optOpenBtn:SetScript("OnClick", function()
     if frame:IsShown() then
@@ -258,11 +290,12 @@ optOpenBtn:SetScript("OnClick", function()
 end)
 
 optionsPanel.refresh = function()
-    local val = (ServerRadioDB.stopOnMinimize ~= false)
-    optStopOnMin:SetChecked(val)
+    optStopOnMin:SetChecked(ServerRadioDB.stopOnMinimize ~= false)
+    optStopOnBg:SetChecked(ServerRadioDB.stopOnBackground ~= false)
 end
 optionsPanel.default = function()
     SyncStopOnMinState(true)
+    SyncStopOnBgState(true)
 end
 
 InterfaceOptions_AddCategory(optionsPanel)
@@ -328,6 +361,10 @@ SlashCmdList["SERVERRADIO"] = function(msg)
         local newVal = not (ServerRadioDB.stopOnMinimize ~= false)
         SyncStopOnMinState(newVal)
         DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Auto-pause on minimize: " .. (newVal and "|cFF00FF00Enabled|r" or "|cFFFF0000Disabled|r"))
+    elseif msg == "bg" or msg == "background" then
+        local newVal = not (ServerRadioDB.stopOnBackground ~= false)
+        SyncStopOnBgState(newVal)
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Auto-pause on inactive/background (windowed): " .. (newVal and "|cFF00FF00Enabled|r" or "|cFFFF0000Disabled|r"))
     elseif msg:match("^vol%s*(%d+)$") then
         local volVal = tonumber(msg:match("^vol%s*(%d+)$"))
         if volVal then
@@ -351,12 +388,20 @@ loaderFrame:SetScript("OnEvent", function(self, event, arg1)
         if ServerRadioDB.stopOnMinimize == nil then
             ServerRadioDB.stopOnMinimize = true
         end
+        if ServerRadioDB.stopOnBackground == nil then
+            ServerRadioDB.stopOnBackground = true
+        end
         SyncStopOnMinState(ServerRadioDB.stopOnMinimize ~= false)
+        SyncStopOnBgState(ServerRadioDB.stopOnBackground ~= false)
     elseif event == "PLAYER_ENTERING_WORLD" then
         if ServerRadioDB.stopOnMinimize == nil then
             ServerRadioDB.stopOnMinimize = true
         end
+        if ServerRadioDB.stopOnBackground == nil then
+            ServerRadioDB.stopOnBackground = true
+        end
         SyncStopOnMinState(ServerRadioDB.stopOnMinimize ~= false)
+        SyncStopOnBgState(ServerRadioDB.stopOnBackground ~= false)
 
         if HasRadioSupport() then
             DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Everlook Broadcasting Co. loaded! Type |cFFFFFF00/radio|r to open player.")
