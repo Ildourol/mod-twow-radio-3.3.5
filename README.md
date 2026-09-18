@@ -30,6 +30,7 @@ The player comes pre-configured with 6 curated live streaming stations:
 - **Expanded In-Game Player Window (420 x 395):**
   - **One-Click Presets:** Instant tuning buttons for all 6 pre-configured stations.
   - **Custom Stream URL Input:** Paste any live web stream URL into the input field and hit Play.
+  - **Minimap Launcher Button (QOLAddon Style):** Circular 32x32 button with tracking ring border and Goblin iconography positioned around the Minimap ring. Left-Click to open/close player, Right-Click to Play/Stop current stream, and drag smoothly around the minimap circle to reposition.
   - **Unified Auto-Pause on Minimize / Leaving Window:** Automatically pauses radio audio whenever the game window is minimized (fullscreen or windowed) or when you leave/unfocus the game window in windowed mode, and automatically resumes the instant you focus back into WoW. Can be toggled via the checkbox in the UI or `/radio min`.
   - **Live Song Title Display:** Displays live track and artist metadata broadcasted by the station.
   - **Independent Volume Slider:** Adjust radio volume from 0% to 100% without altering master game sound.
@@ -57,7 +58,7 @@ Copy the `AddOns/ServerRadio` folder into your game's AddOns directory:
 ### Step 3: Launch & Play
 1. Start `Wow.exe`.
 2. At the Character Selection screen, click **AddOns** in the bottom-left corner and ensure **Server Radio** is checked (check *Load out of date AddOns* if needed).
-3. Enter the game and type `/radio` or `/stream` to open the player.
+3. Enter the game and click the **Minimap Goblin Icon** or type `/radio` to open the player.
 4. Click any station button or enter a custom stream URL, then press **Play**!
 
 ---
@@ -69,8 +70,16 @@ Copy the `AddOns/ServerRadio` folder into your game's AddOns directory:
 | `/radio` or `/stream` | Opens / closes the Radio Player window |
 | `/radio play` | Starts streaming the currently selected station |
 | `/radio stop` | Stops streaming audio |
+| `/radio minimap` | Toggles the Minimap icon on or off (or configure via Interface -> AddOns) |
+| `/radio reset` | Resets window and minimap icon positions to defaults |
 | `/radio min` or `/radio pause` | Toggles auto-pause when game is minimized or inactive |
 | `/radio vol <0-100>` | Sets volume directly (e.g. `/radio vol 50`) |
+
+### Minimap Icon Controls
+- **Left-Click:** Toggle the Server Radio Player window open / closed.
+- **Right-Click:** Play / Stop current audio stream directly without opening the window.
+- **Left-Drag:** Move the icon smoothly around the perimeter of your Minimap (position persists automatically).
+- **Hover Tooltip:** Shows current station, live playing title / stream status, and control tips.
 
 ---
 

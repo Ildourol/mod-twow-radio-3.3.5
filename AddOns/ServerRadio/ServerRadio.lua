@@ -8,6 +8,8 @@ ServerRadioDB = ServerRadioDB or {
     customUrl = "",
     autoPlay = false,
     stopOnMinimize = true,
+    showMinimap = true,
+    minimapPos = 220,
 }
 
 local STATIONS = {
@@ -249,9 +251,22 @@ optAutoPause:SetScript("OnClick", function(self)
     SyncAutoPauseState(isChecked)
 end)
 
+local optMinimap = CreateFrame("CheckButton", "ServerRadioOptMinimap", optionsPanel, "UICheckButtonTemplate")
+optMinimap:SetPoint("TOPLEFT", optAutoPause, "BOTTOMLEFT", 0, -8)
+_G[optMinimap:GetName() .. "Text"]:SetText("Show Minimap Icon (drag around map to position)")
+_G[optMinimap:GetName() .. "Text"]:SetFontObject("GameFontNormal")
+optMinimap:SetChecked(true)
+optMinimap:SetScript("OnClick", function(self)
+    local isChecked = self:GetChecked() and true or false
+    ServerRadioDB.showMinimap = isChecked
+    if ServerRadio_ToggleButton then
+        if isChecked then ServerRadio_ToggleButton:Show() else ServerRadio_ToggleButton:Hide() end
+    end
+end)
+
 local optOpenBtn = CreateFrame("Button", nil, optionsPanel, "UIPanelButtonTemplate")
 optOpenBtn:SetSize(160, 26)
-optOpenBtn:SetPoint("TOPLEFT", optAutoPause, "BOTTOMLEFT", 2, -20)
+optOpenBtn:SetPoint("TOPLEFT", optMinimap, "BOTTOMLEFT", 2, -16)
 optOpenBtn:SetText("Open Radio Player")
 optOpenBtn:SetScript("OnClick", function()
     if frame:IsShown() then
@@ -263,9 +278,13 @@ end)
 
 optionsPanel.refresh = function()
     optAutoPause:SetChecked(ServerRadioDB.stopOnMinimize ~= false)
+    optMinimap:SetChecked(ServerRadioDB.showMinimap ~= false)
 end
 optionsPanel.default = function()
     SyncAutoPauseState(true)
+    ServerRadioDB.showMinimap = true
+    optMinimap:SetChecked(true)
+    if ServerRadio_ToggleButton then ServerRadio_ToggleButton:Show() end
 end
 
 InterfaceOptions_AddCategory(optionsPanel)
@@ -318,6 +337,145 @@ frame:SetScript("OnUpdate", function(self, elapsed)
     end
 end)
 
+-- -------------------------------------------------------------
+-- Minimap Toggle Button (QOLAddon-style circular launcher positioned around Minimap)
+-- -------------------------------------------------------------
+local minimapBtn
+
+local function UpdateMinimapButtonPos()
+    if not minimapBtn then return end
+    local angle = math.rad(ServerRadioDB.minimapPos or 220)
+    local cos = math.cos(angle)
+    local sin = math.sin(angle)
+    -- Positioned around the Minimap circumference (radius 80)
+    local x = cos * 80
+    local y = sin * 80
+    minimapBtn:ClearAllPoints()
+    minimapBtn:SetPoint("CENTER", Minimap, "CENTER", x, y)
+end
+
+function ServerRadio_CreateToggleButton()
+    if minimapBtn then return minimapBtn end
+
+    local SIZE = 32
+    local b = CreateFrame("Button", "ServerRadio_ToggleButton", Minimap)
+    b:SetSize(SIZE, SIZE)
+    b:SetFrameStrata("MEDIUM")
+    b:SetFrameLevel(8)
+    b:SetMovable(true)
+    b:SetClampedToScreen(true)
+    b:EnableMouse(true)
+    b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    b:RegisterForDrag("LeftButton")
+
+    -- Inner Icon (Goblin Radio Icon matching main header)
+    local icon = b:CreateTexture(nil, "BACKGROUND")
+    icon:SetTexture("Interface\\Icons\\INV_Misc_Head_Goblin_01")
+    icon:SetSize(20, 20)
+    icon:SetPoint("CENTER", b, "CENTER", 0, 0)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    if icon.SetMask then
+        icon:SetMask("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+    end
+    b.icon = icon
+
+    -- Border (Standard Tracking Ring Border)
+    local border = b:CreateTexture(nil, "OVERLAY")
+    border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+    border:SetSize(54, 54)
+    border:SetPoint("CENTER", b, "CENTER", 11, -11)
+    b.border = border
+
+    -- Highlight Texture
+    b:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight", "ADD")
+
+    -- Dragging smoothly around the Minimap circumference
+    b:SetScript("OnDragStart", function(self)
+        self.isMoving = true
+        self:SetScript("OnUpdate", function(self)
+            local mx, my = Minimap:GetCenter()
+            local cx, cy = GetCursorPosition()
+            local scale = UIParent:GetEffectiveScale()
+            cx, cy = cx / scale, cy / scale
+            local angle = math.deg(math.atan2(cy - my, cx - mx))
+            if angle < 0 then angle = angle + 360 end
+            ServerRadioDB.minimapPos = angle
+            UpdateMinimapButtonPos()
+        end)
+    end)
+
+    b:SetScript("OnDragStop", function(self)
+        self.isMoving = false
+        self:SetScript("OnUpdate", nil)
+    end)
+
+    -- Clicks: Left = Toggle UI, Right = Toggle Play/Stop
+    b:SetScript("OnClick", function(self, btn)
+        if btn == "RightButton" then
+            if HasRadioSupport() and IsRadioPlaying and IsRadioPlaying() then
+                ServerRadio_Stop()
+            else
+                ServerRadio_PlayCurrent()
+            end
+        else
+            if frame:IsShown() then
+                frame:Hide()
+            else
+                frame:Show()
+                frame:Raise()
+            end
+        end
+    end)
+
+    -- Tooltip on Hover (matches QOLAddon style & styling)
+    b:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:SetText("Server Radio", 1, 0.79, 0.30)
+        GameTooltip:AddLine("Everlook Broadcasting Co.", 1, 1, 1)
+
+        local currentStation = STATIONS[ServerRadioDB.selectedStation or 1]
+        local custom = urlEdit and urlEdit:GetText() or ServerRadioDB.customUrl
+        local stationName = (custom and custom:match("^https?://.+") and custom ~= "http://") and "Custom Stream" or (currentStation and currentStation.name or "Unknown")
+        GameTooltip:AddLine("Station: |cFFFFFFFF" .. stationName .. "|r", 0.8, 0.8, 0.8)
+
+        local isPlaying = HasRadioSupport() and IsRadioPlaying and IsRadioPlaying()
+        if isPlaying then
+            local title = GetRadioTitle and GetRadioTitle()
+            if title and title ~= "" then
+                GameTooltip:AddLine("Playing: |cFF00FF00" .. title .. "|r", 0.8, 0.8, 0.8)
+            else
+                GameTooltip:AddLine("Status: |cFF00FF00Streaming|r", 0.8, 0.8, 0.8)
+            end
+        else
+            GameTooltip:AddLine("Status: |cFF888888Stopped|r", 0.8, 0.8, 0.8)
+        end
+
+        GameTooltip:AddLine(" ", 1, 1, 1)
+        GameTooltip:AddLine("|cFF00CCFFLeft-Click:|r Toggle Radio Player", 0.7, 0.7, 0.7)
+        GameTooltip:AddLine("|cFF00CCFFRight-Click:|r Play / Stop Audio", 0.7, 0.7, 0.7)
+        GameTooltip:AddLine("|cFF00CCFFDrag:|r Move around Minimap", 0.7, 0.7, 0.7)
+        GameTooltip:AddLine("/radio minimap to toggle icon", 0.5, 0.5, 0.5)
+        GameTooltip:Show()
+    end)
+
+    b:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    minimapBtn = b
+    _G["ServerRadioMinimapButton"] = b
+
+    UpdateMinimapButtonPos()
+
+    if ServerRadioDB.showMinimap == false then
+        b:Hide()
+    else
+        b:Show()
+    end
+
+    return b
+end
+
 -- Slash Command Handler
 SLASH_SERVERRADIO1 = "/radio"
 SLASH_SERVERRADIO2 = "/stream"
@@ -331,6 +489,24 @@ SlashCmdList["SERVERRADIO"] = function(msg)
         local newVal = not (ServerRadioDB.stopOnMinimize ~= false)
         SyncAutoPauseState(newVal)
         DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Auto-pause on minimize/background: " .. (newVal and "|cFF00FF00Enabled|r" or "|cFFFF0000Disabled|r"))
+    elseif msg == "minimap" or msg == "icon" or msg == "btn" or msg == "map" then
+        ServerRadioDB.showMinimap = not (ServerRadioDB.showMinimap ~= false)
+        if minimapBtn then
+            if ServerRadioDB.showMinimap then minimapBtn:Show() else minimapBtn:Hide() end
+        end
+        if ServerRadioOptMinimap then
+            ServerRadioOptMinimap:SetChecked(ServerRadioDB.showMinimap)
+        end
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Minimap button: " .. (ServerRadioDB.showMinimap and "|cFF00FF00Shown|r" or "|cFFFF0000Hidden|r"))
+    elseif msg == "reset" then
+        ServerRadioDB.minimapPos = 220
+        ServerRadioDB.showMinimap = true
+        UpdateMinimapButtonPos()
+        if minimapBtn then minimapBtn:Show() end
+        if ServerRadioOptMinimap then ServerRadioOptMinimap:SetChecked(true) end
+        frame:ClearAllPoints()
+        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Player frame and minimap icon positions reset.")
     elseif msg:match("^vol%s*(%d+)$") then
         local volVal = tonumber(msg:match("^vol%s*(%d+)$"))
         if volVal then
@@ -354,17 +530,31 @@ loaderFrame:SetScript("OnEvent", function(self, event, arg1)
         if ServerRadioDB.stopOnMinimize == nil then
             ServerRadioDB.stopOnMinimize = true
         end
+        if ServerRadioDB.showMinimap == nil then
+            ServerRadioDB.showMinimap = true
+        end
+        if ServerRadioDB.minimapPos == nil then
+            ServerRadioDB.minimapPos = 220
+        end
         SyncAutoPauseState(ServerRadioDB.stopOnMinimize ~= false)
+        ServerRadio_CreateToggleButton()
     elseif event == "PLAYER_ENTERING_WORLD" then
         if ServerRadioDB.stopOnMinimize == nil then
             ServerRadioDB.stopOnMinimize = true
         end
+        if ServerRadioDB.showMinimap == nil then
+            ServerRadioDB.showMinimap = true
+        end
+        if ServerRadioDB.minimapPos == nil then
+            ServerRadioDB.minimapPos = 220
+        end
         SyncAutoPauseState(ServerRadioDB.stopOnMinimize ~= false)
+        ServerRadio_CreateToggleButton()
 
         if HasRadioSupport() then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Everlook Broadcasting Co. loaded! Type |cFFFFFF00/radio|r to open player.")
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[ServerRadio]|r Everlook Broadcasting Co. loaded! Type |cFFFFFF00/radio|r or click the Minimap icon.")
         else
-            DEFAULT_CHAT_FRAME:AddMessage("|cFFFF8800[ServerRadio]|r Addon loaded. Type |cFFFFFF00/radio|r.")
+            DEFAULT_CHAT_FRAME:AddMessage("|cFFFF8800[ServerRadio]|r Addon loaded. Type |cFFFFFF00/radio|r or click the Minimap icon.")
         end
     end
 end)
