@@ -48,7 +48,7 @@ frame:Hide()
 local headerIcon = frame:CreateTexture(nil, "OVERLAY")
 headerIcon:SetSize(28, 28)
 headerIcon:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -14)
-headerIcon:SetTexture("Interface\\Icons\\INV_Misc_Head_Goblin_01")
+headerIcon:SetTexture("Interface\\Icons\\INV_Gizmo_GoblinBoomBox_01")
 headerIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
 -- Header Title
@@ -370,7 +370,7 @@ function ServerRadio_CreateToggleButton()
 
     -- Inner Icon (Goblin Radio Icon matching main header)
     local icon = b:CreateTexture(nil, "BACKGROUND")
-    icon:SetTexture("Interface\\Icons\\INV_Misc_Head_Goblin_01")
+    icon:SetTexture("Interface\\Icons\\INV_Gizmo_GoblinBoomBox_01")
     icon:SetSize(20, 20)
     icon:SetPoint("CENTER", b, "CENTER", 0, 0)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
