@@ -6,18 +6,20 @@
 
 A lightweight, crash-safe client-side live audio streaming modification and in-game player for **World of Warcraft 3.3.5a (Wrath of the Lich King, build 12340)**.
 
-Streams live 24/7 internet radio stations — including the official **Turtle WoW Everlook Broadcasting Co.** relays, chillhop, ambient, retro, vaporwave, and any custom Icecast, Shoutcast, MP3, AAC, and OGG streams — directly inside the game engine with independent volume control.
+Streams internet radio stations — including chillhop, ambient, retro, vaporwave, and custom Icecast, Shoutcast, MP3, AAC, and OGG streams — directly inside the game engine with independent volume control.
+
+> **Service notice:** The original **Turtle WoW Radio** server has been discontinued. Its Everlook relay presets are retained for reference but are no longer expected to work. You can still listen to the other available preset radio stations or paste your own streaming URL into the player to listen to a custom station. Availability of third-party streams may vary.
 
 ---
 
 ## Preset Stations Included
 
-The player comes pre-configured with 6 curated live streaming stations:
+The player comes pre-configured with 6 station entries. The 2 original Turtle WoW relays have been discontinued; the other stations and custom stream URLs remain usable subject to stream availability:
 
 | Station | Genre | Stream URL |
 | :--- | :--- | :--- |
-| **Everlook Relay 1 (TWoW)** | Turtle WoW Radio | `http://radiodirect.turtle-music.org/stream` |
-| **Everlook Relay 2 (TWoW)** | Turtle WoW Radio (Backup) | `http://radiodirect2.turtle-music.org/stream` |
+| **Everlook Relay 1 (TWoW)** | Discontinued Turtle WoW Radio relay | `http://radiodirect.turtle-music.org/stream` |
+| **Everlook Relay 2 (TWoW)** | Discontinued Turtle WoW Radio backup relay | `http://radiodirect2.turtle-music.org/stream` |
 | **Nightwave Plaza** | Vaporwave / Future Funk | `http://radio.plaza.one/mp3` |
 | **SomaFM Groove Salad** | Ambient / Downtempo | `http://ice1.somafm.com/groovesalad-128-mp3` |
 | **Lofi Girl** | Chill Beats / Lo-Fi Hip Hop | `http://stream.zeno.fm/f3wvbbqmdg8uv` |
@@ -28,7 +30,7 @@ The player comes pre-configured with 6 curated live streaming stations:
 ## Features
 
 - **Expanded In-Game Player Window (420 x 395):**
-  - **One-Click Presets:** Instant tuning buttons for all 6 pre-configured stations.
+  - **One-Click Presets:** Instant tuning buttons for the pre-configured stations (the 2 discontinued Turtle WoW relays no longer work).
   - **Custom Stream URL Input:** Paste any live web stream URL into the input field and hit Play.
   - **Minimap Launcher Button (QOLAddon Style):** Circular 32x32 button with tracking ring border and Goblin iconography positioned around the Minimap ring. Left-Click to open/close player, Right-Click to Play/Stop current stream, and drag smoothly around the minimap circle to reposition.
   - **Unified Auto-Pause on Minimize / Leaving Window:** Automatically pauses radio audio whenever the game window is minimized (fullscreen or windowed) or when you leave/unfocus the game window in windowed mode, and automatically resumes the instant you focus back into WoW. Can be toggled via the checkbox in the UI or `/radio min`.
@@ -121,4 +123,4 @@ SUCCESS: Registered Radio Lua functions on MAIN THREAD for state 0x...
 ## License & Credits
 
 - Audio streaming powered by the [BASS Audio Library](https://www.un4seen.com/).
-- Special thanks to the Turtle WoW community and Everlook Broadcasting Co. for 24/7 in-game radio broadcasts.
+- Special thanks to the Turtle WoW community and Everlook Broadcasting Co. for their original in-game radio broadcasts (now discontinued).
